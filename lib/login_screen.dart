@@ -1,4 +1,4 @@
-﻿import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
@@ -49,7 +49,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
     try {
       await supabase.auth.signInWithPassword(email: email, password: password);
-      // main.dart switches to the home screen automatically.
     } on AuthException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -66,9 +65,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _openSignUp() {
-    Navigator.of(context).push(
-      CupertinoPageRoute(builder: (_) => const SignUpScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(CupertinoPageRoute(builder: (_) => const SignUpScreen()));
   }
 
   @override

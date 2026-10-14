@@ -1,4 +1,4 @@
-﻿import 'package:flutter/cupertino.dart';
+import 'package:flutter/cupertino.dart';
 
 /// Reusable styled text field used by both screens.
 class AuthTextField extends StatelessWidget {
@@ -232,7 +232,10 @@ class _LoginScreenState extends State<LoginScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text("Don't have an account?", style: TextStyle(color: secondary)),
+              Text(
+                "Don't have an account?",
+                style: TextStyle(color: secondary),
+              ),
               CupertinoButton(
                 padding: const EdgeInsets.only(left: 6),
                 onPressed: _openSignUp,
@@ -319,9 +322,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final secondary = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return CupertinoPageScaffold(
-      navigationBar: const CupertinoNavigationBar(
-        middle: Text('Sign up'),
-      ),
+      navigationBar: const CupertinoNavigationBar(middle: Text('Sign up')),
       child: _AuthLayout(
         children: [
           const Text(
@@ -391,7 +392,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('Already have an account?', style: TextStyle(color: secondary)),
+              Text(
+                'Already have an account?',
+                style: TextStyle(color: secondary),
+              ),
               CupertinoButton(
                 padding: const EdgeInsets.only(left: 6),
                 onPressed: () => Navigator.of(context).pop(),

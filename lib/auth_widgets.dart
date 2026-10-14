@@ -1,9 +1,9 @@
-﻿import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 
 final RegExp emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
 
-/// Text field shared by login and sign up (AdaptiveTextField inside).
+/// Text field shared by login and sign up.
 class AuthTextField extends StatelessWidget {
   const AuthTextField({
     super.key,
@@ -39,16 +39,25 @@ class AuthTextField extends StatelessWidget {
       textCapitalization: textCapitalization,
       autocorrect: false,
       onSubmitted: onSubmitted,
-      prefixIcon: Padding(
-        padding: const EdgeInsets.only(left: 12, right: 4),
-        child: Icon(icon, size: 20),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      prefix: Padding(
+        padding: const EdgeInsets.only(left: 12, right: 6),
+        child: Icon(
+          icon,
+          size: 20,
+          color: CupertinoColors.systemGrey.resolveFrom(context),
+        ),
       ),
-      suffixIcon: suffix,
+      suffix: suffix,
+      cupertinoDecoration: BoxDecoration(
+        color: CupertinoColors.tertiarySystemFill.resolveFrom(context),
+        borderRadius: BorderRadius.circular(12),
+      ),
     );
   }
 }
 
-/// Eye button that shows / hides a password (AdaptiveButton.icon inside).
+/// Eye button that shows / hides a password.
 class PasswordVisibilityToggle extends StatelessWidget {
   const PasswordVisibilityToggle({
     super.key,
@@ -61,18 +70,22 @@ class PasswordVisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: AdaptiveButton.icon(
-        onPressed: onTap,
-        icon: obscured ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Icon(
+          obscured ? CupertinoIcons.eye : CupertinoIcons.eye_slash,
+          size: 20,
+          color: CupertinoColors.systemGrey.resolveFrom(context),
+        ),
       ),
     );
   }
 }
 
-/// Full-width filled primary button (AdaptiveButton inside).
+/// Full-width filled primary button.
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -118,10 +131,14 @@ class AuthLinkRow extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(text, style: TextStyle(color: secondary)),
-        AdaptiveButton(
+        // Child mode (not label mode) so the native iOS 26 platform view sizes
+        // itself to its content. Title/label mode is only wrapped in a
+        // `SizedBox(height:)` with no width limit, so a `Row` (unbounded width)
+        // would make it expand to an infinite width and overflow.
+        AdaptiveButton.child(
           onPressed: onTap,
           style: AdaptiveButtonStyle.plain,
-          label: actionLabel,
+          child: Text(actionLabel),
         ),
       ],
     );

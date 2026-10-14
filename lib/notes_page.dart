@@ -26,7 +26,6 @@ class _NotesPageState extends State<NotesPage> {
     _load();
   }
 
-  // READ NOTES
   Future<void> _load() async {
     try {
       final data = await supabase
@@ -58,38 +57,40 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  // ADD NOTE DIALOG
-  Future<void> _showAddDialog() async {
-    if (_saving) return;
-
-    var cancelled = false;
-
-    final result = await AdaptiveAlertDialog.inputShow(
+  Future<String?> _showNoteDialog({
+    required String title,
+    required String action,
+    String initialValue = '',
+  }) {
+    return AdaptiveAlertDialog.inputShow(
       context: context,
-      title: 'Add note',
+      title: title,
       message: 'Write your note below.',
       input: AdaptiveAlertDialogInput(
         placeholder: 'Write a note',
-        initialValue: '',
+        initialValue: initialValue,
         keyboardType: TextInputType.text,
       ),
       actions: [
         AlertAction(
           title: 'Cancel',
           style: AlertActionStyle.cancel,
-          onPressed: () {
-            cancelled = true;
-          },
+          onPressed: () {},
         ),
         AlertAction(
-          title: 'Save',
+          title: action,
           style: AlertActionStyle.primary,
           onPressed: () {},
         ),
       ],
     );
+  }
 
-    if (!mounted || cancelled || result == null) return;
+  Future<void> _showAddDialog() async {
+    if (_saving) return;
+
+    final result = await _showNoteDialog(title: 'Add note', action: 'Save');
+    if (!mounted || result == null) return;
 
     final text = result.trim();
     if (text.isEmpty) return;
@@ -97,7 +98,6 @@ class _NotesPageState extends State<NotesPage> {
     await _add(text);
   }
 
-  // CREATE NOTE
   Future<void> _add(String text) async {
     if (_saving) return;
 
@@ -105,7 +105,6 @@ class _NotesPageState extends State<NotesPage> {
 
     try {
       await supabase.from('Notes').insert({'notes': text});
-
       await _load();
     } on PostgrestException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -118,48 +117,23 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  // EDIT NOTE DIALOG
   Future<void> _showEditDialog(Map<String, dynamic> note) async {
     if (_saving) return;
 
     final oldText = '${note['notes'] ?? ''}';
-    var cancelled = false;
-
-    final result = await AdaptiveAlertDialog.inputShow(
-      context: context,
+    final result = await _showNoteDialog(
       title: 'Edit note',
-      message: 'Update your note below.',
-      input: AdaptiveAlertDialogInput(
-        placeholder: 'Edit your note',
-        initialValue: oldText,
-        keyboardType: TextInputType.text,
-      ),
-      actions: [
-        AlertAction(
-          title: 'Cancel',
-          style: AlertActionStyle.cancel,
-          onPressed: () {
-            cancelled = true;
-          },
-        ),
-        AlertAction(
-          title: 'Update',
-          style: AlertActionStyle.primary,
-          onPressed: () {},
-        ),
-      ],
+      action: 'Update',
+      initialValue: oldText,
     );
-
-    if (!mounted || cancelled || result == null) return;
+    if (!mounted || result == null) return;
 
     final newText = result.trim();
-
     if (newText.isEmpty || newText == oldText) return;
 
     await _update(note['id'], newText);
   }
 
-  // UPDATE NOTE IN SUPABASE
   Future<void> _update(dynamic id, String text) async {
     if (_saving) return;
 
@@ -193,7 +167,6 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  // DELETE NOTE
   Future<void> _delete(dynamic id) async {
     if (_saving) return;
 
@@ -201,7 +174,6 @@ class _NotesPageState extends State<NotesPage> {
 
     try {
       await supabase.from('Notes').delete().eq('id', id);
-
       await _load();
     } on PostgrestException catch (e) {
       if (mounted) setState(() => _error = e.message);
@@ -214,8 +186,7 @@ class _NotesPageState extends State<NotesPage> {
     }
   }
 
-  // ADD MENU BUTTON
-  Widget _menuButton() {
+  Widget _navigationAction() {
     if (_saving) {
       return const SizedBox(
         width: _actionSize,
@@ -227,60 +198,53 @@ class _NotesPageState extends State<NotesPage> {
     return SizedBox(
       width: _actionSize,
       height: _actionSize,
-      child: AdaptivePopupMenuButton.icon<String>(
-        icon: PlatformInfo.isIOS26OrHigher()
-            ? 'ellipsis'
-            : CupertinoIcons.ellipsis,
-        size: _actionSize,
-        buttonStyle: PopupButtonStyle.plain,
-        items: [
-          AdaptivePopupMenuItem(
-            label: 'Add note',
-            icon: PlatformInfo.isIOS26OrHigher() ? 'plus' : CupertinoIcons.add,
-            value: 'add',
-          ),
-        ],
-        onSelected: (index, item) {
-          if (item.value == 'add') {
-            _showAddDialog();
-          }
-        },
+      child: AdaptiveButton.icon(
+        onPressed: _showAddDialog,
+        icon: CupertinoIcons.add,
+        style: AdaptiveButtonStyle.plain,
+        minSize: const Size(_actionSize, _actionSize),
+        padding: EdgeInsets.zero,
+        useSmoothRectangleBorder: false,
       ),
     );
   }
 
-  // EDIT AND DELETE BUTTONS
-  Widget _noteActions(Map<String, dynamic> note) {
+  Widget _actionButton({
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color? color,
+  }) {
     return SizedBox(
-      width: 88,
-      child: Row(
+      width: _actionSize,
+      height: _actionSize,
+      child: AdaptiveButton.icon(
+        onPressed: _saving ? null : onPressed,
+        icon: icon,
+        style: AdaptiveButtonStyle.plain,
+        iconColor: color,
+        minSize: const Size(_actionSize, _actionSize),
+        padding: EdgeInsets.zero,
+        useSmoothRectangleBorder: false,
+      ),
+    );
+  }
+
+  Widget _noteTile(Map<String, dynamic> note, bool isLast) {
+    return AdaptiveListTile(
+      title: Text('${note['notes'] ?? ''}'),
+      hideBottomDivider: isLast,
+      onTap: () => _showEditDialog(note),
+      trailing: Row(
         mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          SizedBox(
-            width: _actionSize,
-            height: _actionSize,
-            child: AdaptiveButton.icon(
-              onPressed: () => _showEditDialog(note),
-              icon: CupertinoIcons.pencil,
-              style: AdaptiveButtonStyle.plain,
-              minSize: const Size(_actionSize, _actionSize),
-              padding: EdgeInsets.zero,
-              useSmoothRectangleBorder: false,
-            ),
+          _actionButton(
+            icon: CupertinoIcons.pencil,
+            onPressed: () => _showEditDialog(note),
           ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: _actionSize,
-            height: _actionSize,
-            child: AdaptiveButton.icon(
-              onPressed: () => _delete(note['id']),
-              icon: CupertinoIcons.delete,
-              style: AdaptiveButtonStyle.plain,
-              minSize: const Size(_actionSize, _actionSize),
-              padding: EdgeInsets.zero,
-              useSmoothRectangleBorder: false,
-            ),
+          _actionButton(
+            icon: CupertinoIcons.delete,
+            color: CupertinoColors.systemRed.resolveFrom(context),
+            onPressed: () => _delete(note['id']),
           ),
         ],
       ),
@@ -295,20 +259,20 @@ class _NotesPageState extends State<NotesPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // HEADER
           AdaptiveListTile(
             title: const Text(
               'My notes',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             hideBottomDivider: true,
-            trailing: _menuButton(),
+            trailing: _navigationAction(),
           ),
-
-          // ERROR MESSAGE
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 4,
+              ),
               child: Text(
                 _error!,
                 style: TextStyle(
@@ -317,8 +281,6 @@ class _NotesPageState extends State<NotesPage> {
                 ),
               ),
             ),
-
-          // NOTES LIST
           Expanded(
             child: _loading
                 ? const Center(child: CupertinoActivityIndicator())
@@ -334,13 +296,7 @@ class _NotesPageState extends State<NotesPage> {
                     itemCount: _notes.length,
                     itemBuilder: (context, index) {
                       final note = _notes[index];
-
-                      return AdaptiveListTile(
-                        title: Text('${note['notes'] ?? ''}'),
-                        onTap: () => _showEditDialog(note),
-                        hideBottomDivider: index == _notes.length - 1,
-                        trailing: _noteActions(note),
-                      );
+                      return _noteTile(note, index == _notes.length - 1);
                     },
                   ),
           ),

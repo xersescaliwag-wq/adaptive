@@ -39,7 +39,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final email = supabase.auth.currentUser?.email ?? 'No email available';
-
     final secondary = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return SafeArea(
@@ -85,7 +84,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       SizedBox(
                         width: 170,
                         child: AdaptiveButton(
-                          onPressed: _signOut,
+                          onPressed: _signingOut ? null : _signOut,
                           enabled: !_signingOut,
                           style: AdaptiveButtonStyle.tinted,
                           size: AdaptiveButtonSize.large,

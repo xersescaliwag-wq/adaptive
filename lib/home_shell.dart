@@ -1,7 +1,8 @@
-﻿import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'notes_page.dart';
+import 'profile_page.dart';
 import 'supabase_client.dart';
 
 class HomeShell extends StatefulWidget {
@@ -37,10 +38,7 @@ class _HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final pages = <Widget>[
-      const NotesPage(),
-      const ProfilePage(),
-    ];
+    final pages = <Widget>[const NotesPage(), const ProfilePage()];
 
     return AdaptiveScaffold(
       minimizeBehavior: TabBarMinimizeBehavior.automatic,
@@ -53,38 +51,14 @@ class _HomeShellState extends State<HomeShell> {
             label: 'Home',
           ),
           AdaptiveNavigationDestination(
-            icon: PlatformInfo.isIOS ? 'person.fill' : CupertinoIcons.person_fill,
+            icon: PlatformInfo.isIOS
+                ? 'person.fill'
+                : CupertinoIcons.person_fill,
             label: 'Profile',
           ),
         ],
       ),
       body: pages[_selectedIndex],
-    );
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final email = supabase.auth.currentUser?.email ?? '';
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(email, style: const TextStyle(fontSize: 16)),
-          const SizedBox(height: 16),
-          AdaptiveButton(
-            onPressed: () {
-              supabase.auth.signOut();
-            },
-            style: AdaptiveButtonStyle.filled,
-            label: 'Log out',
-          ),
-        ],
-      ),
     );
   }
 }

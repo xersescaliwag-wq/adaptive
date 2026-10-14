@@ -1,4 +1,4 @@
-﻿import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
+import 'package:adaptive_platform_ui/adaptive_platform_ui.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show AuthException;
 
@@ -71,7 +71,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (!mounted) return;
 
       if (res.session == null) {
-        // Email confirmation is enabled in Supabase.
         setState(() {
           _loading = false;
           _info = 'Check your email to confirm your account, then log in.';
@@ -79,7 +78,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
         return;
       }
 
-      // Signed in: close this screen so the home screen is visible.
       Navigator.of(context).popUntil((route) => route.isFirst);
     } on AuthException catch (e) {
       if (!mounted) return;
@@ -101,6 +99,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final secondary = CupertinoColors.secondaryLabel.resolveFrom(context);
 
     return AdaptiveScaffold(
+      appBar: const AdaptiveAppBar(title: 'Sign up'),
       body: AuthLayout(
         children: [
           const Text(
