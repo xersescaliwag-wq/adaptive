@@ -1,70 +1,33 @@
 workflows:
-  ios-signed-device-build:
-    name: iOS Signed Device Build
+  ios-sideloadly-build:
+    name: iOS Sideloadly Build
     max_build_duration: 120
     instance_type: mac_mini_m1
 
     environment:
-      groups:
-        - app_store_credentials
-        - certificate_credentials
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        BUNDLE_ID: com.ferre.adaptive
-        SIGNING_PROFILE_TYPE: IOS_APP_DEVELOPMENT
 
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
-      - name: Validate iOS signing credentials
-        script: |
-          missing=0
-
-          if [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
-            echo "Missing required Codemagic variable: APP_STORE_CONNECT_ISSUER_ID"
-            missing=1
-          fi
-          if [ -z "$APP_STORE_CONNECT_KEY_IDENTIFIER" ]; then
-            echo "Missing required Codemagic variable: APP_STORE_CONNECT_KEY_IDENTIFIER"
-            missing=1
-          fi
-          if [ -z "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
-            echo "Missing required Codemagic variable: APP_STORE_CONNECT_PRIVATE_KEY"
-            missing=1
-          fi
-          if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
-            echo "Missing required Codemagic variable: CERTIFICATE_PRIVATE_KEY"
-            missing=1
-          fi
-
-          if [ "$missing" -ne 0 ]; then
-            echo "Add these variables in Codemagic under app_store_credentials and certificate_credentials, or add them directly to the workflow environment."
-            exit 1
-          fi
-      - name: Initialize iOS signing keychain
-        script: keychain initialize
-      - name: Fetch or create iOS signing files
-        script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type "$SIGNING_PROFILE_TYPE" \
-            --create \
-            --delete-stale-profiles
-      - name: Add signing certificates to keychain
-        script: keychain add-certificates
-      - name: Set up iOS code signing
-        script: xcode-project use-profiles --code-signing-setup-verbose-logging
-      - name: Build signed iOS IPA
-        script: |
-          flutter build ipa --release --export-options-plist=/Users/builder/export_options.plist
-      - name: Verify signed app
+      - name: Build unsigned iOS app
+        script: flutter build ios --release --no-codesign
+      - name: Package unsigned IPA for Sideloadly
         script: |
           set -e
-          APP="build/ios/archive/Runner.xcarchive/Products/Applications/Runner.app"
+          APP="build/ios/iphoneos/Runner.app"
+          IPA_DIR="build/ios/sideloadly"
+
           test -d "$APP"
-          codesign --verify --deep --strict --verbose=2 "$APP"
+          rm -rf "$IPA_DIR"
+          mkdir -p "$IPA_DIR/Payload"
+          ditto "$APP" "$IPA_DIR/Payload/Runner.app"
+
+          cd "$IPA_DIR"
+          zip -qry adaptive-sideloadly-unsigned.ipa Payload
+          unzip -t adaptive-sideloadly-unsigned.ipa
 
     artifacts:
-      - build/ios/ipa/*.ipa
-      - build/ios/archive/*.xcarchive
+      - build/ios/sideloadly/adaptive-sideloadly-unsigned.ipa
