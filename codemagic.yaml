@@ -5,6 +5,9 @@ workflows:
     instance_type: mac_mini_m1
 
     environment:
+      groups:
+        - app_store_credentials
+        - certificate_credentials
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -15,6 +18,31 @@ workflows:
     scripts:
       - name: Get Flutter dependencies
         script: flutter pub get
+      - name: Validate iOS signing credentials
+        script: |
+          missing=0
+
+          if [ -z "$APP_STORE_CONNECT_ISSUER_ID" ]; then
+            echo "Missing required Codemagic variable: APP_STORE_CONNECT_ISSUER_ID"
+            missing=1
+          fi
+          if [ -z "$APP_STORE_CONNECT_KEY_IDENTIFIER" ]; then
+            echo "Missing required Codemagic variable: APP_STORE_CONNECT_KEY_IDENTIFIER"
+            missing=1
+          fi
+          if [ -z "$APP_STORE_CONNECT_PRIVATE_KEY" ]; then
+            echo "Missing required Codemagic variable: APP_STORE_CONNECT_PRIVATE_KEY"
+            missing=1
+          fi
+          if [ -z "$CERTIFICATE_PRIVATE_KEY" ]; then
+            echo "Missing required Codemagic variable: CERTIFICATE_PRIVATE_KEY"
+            missing=1
+          fi
+
+          if [ "$missing" -ne 0 ]; then
+            echo "Add these variables in Codemagic under app_store_credentials and certificate_credentials, or add them directly to the workflow environment."
+            exit 1
+          fi
       - name: Initialize iOS signing keychain
         script: keychain initialize
       - name: Fetch or create iOS signing files
