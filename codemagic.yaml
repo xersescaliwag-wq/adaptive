@@ -7,6 +7,7 @@ workflows:
       flutter: stable
       xcode: latest
     scripts:
+
       - name: Get Flutter dependencies
         script: flutter packages pub get
       - name: Build unsigned iOS IPA
